@@ -46,7 +46,7 @@ def load_data():
     return orders, order_products_train, order_products_prior, products
 
 # ----------------------------
-# Step 2: Feature Engineering (CRITICAL FIX)
+# Step 2: Feature Engineering
 # ----------------------------
 def create_features(orders, order_products_prior, products):
     """
@@ -106,13 +106,11 @@ def prepare_training_data(orders, order_products_train, user_features, product_f
 def preprocess_data(train_data):
     train_data.fillna(0, inplace=True)
 
-    # Only encode categorical features that are safe
     le_aisle = LabelEncoder()
     train_data["aisle"] = le_aisle.fit_transform(train_data["aisle"])
     le_dept = LabelEncoder()
     train_data["department"] = le_dept.fit_transform(train_data["department"])
 
-    # SAFE features - only use historical information
     features = [
         "total_orders",
         "avg_days_between_orders",
@@ -127,14 +125,11 @@ def preprocess_data(train_data):
         "user_product_avg_order_hod",
         "aisle",
         "department",
-        # REMOVED: order_dow, order_hour_of_day, days_since_prior_order
-        # These could leak information about the current order
     ]
     
     X = train_data[features]
     y = train_data["reordered"]
 
-    # Identify all numerical columns for scaling
     num_cols = X.select_dtypes(include=[np.number]).columns.tolist()
 
     scaler = StandardScaler()
@@ -144,7 +139,6 @@ def preprocess_data(train_data):
         X, y, test_size=0.2, random_state=SEED, stratify=y
     )
 
-    # Apply SMOTE to training set only
     print(f"Class distribution before SMOTE: {np.bincount(y_train)}")
     sm = SMOTE(random_state=SEED)
     X_train_res, y_train_res = sm.fit_resample(X_train, y_train)
@@ -269,4 +263,5 @@ def main():
     print("3. Validation set contamination")
 
 if __name__ == "__main__":
+
     main()
